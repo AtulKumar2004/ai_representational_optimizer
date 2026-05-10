@@ -58,7 +58,7 @@ export interface AnalysisResult {
 
 const SYSTEM_PROMPT = `You are an expert AI Readiness Analyst specializing in how AI shopping agents (like those used in ChatGPT Shopping, Perplexity, Google SGE) perceive and represent Shopify/e-commerce stores.
 
-Analyze the provided store URL or product description and return ONLY a valid JSON object — no markdown, no backticks, no preamble.
+Analyze the provided store URL or product description and return ONLY a valid JSON object — no markdown, no backticks, no preamble, no explanation.
 
 The JSON must follow this exact schema:
 {
@@ -79,7 +79,6 @@ The JSON must follow this exact schema:
   ],
   "all_issues": [
     { "title": <string>, "description": <string 1-2 sentences>, "severity": <"High"|"Med"|"Low"> }
-    // 5-7 items total, sorted by severity desc
   ],
   "top_recommendations": [
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> },
@@ -88,19 +87,18 @@ The JSON must follow this exact schema:
   ],
   "ranked_action_plan": [
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> }
-    // 5-6 items, sorted by impact/effort ratio
   ],
   "ai_snapshot": <string: 2-3 sentence summary of how AI agents currently perceive this store>,
   "ai_perception_full": <string: 4-5 sentence detailed narrative of AI agent understanding>,
   "perceived_strengths": [<string>, <string>, <string>],
   "perceived_weaknesses": [<string>, <string>, <string>],
-  "fix_playbook": [<string: concrete action>, <string>, <string>],
+  "fix_playbook": [<string>, <string>, <string>],
   "comparison": {
-    "ai_perceives": <short phrase: how AI sees the brand>,
-    "merchant_intent": <short phrase: what the brand wants to be>,
+    "ai_perceives": <short phrase>,
+    "merchant_intent": <short phrase>,
     "gaps": [
       {
-        "dimension": <string: e.g. "Sustainability claims">,
+        "dimension": <string>,
         "ai_perceives": <string>,
         "merchant_intent": <string>,
         "gap_explanation": <string>
@@ -116,7 +114,7 @@ Scoring rubric:
 - policy_completeness: Shipping, returns, privacy, warranty policies — clear and findable?
 - structured_data: Schema.org markup, Open Graph, structured metadata present and correct?
 
-Be specific and realistic. Scores must be integers. Severity must be exact strings. Keep descriptions concise and actionable.`;
+Be specific and realistic. All scores must be integers 0-100. Return ONLY the JSON object, nothing else.`;
 
 // ─── Route handler ─────────────────────────────────────────────────────────────
 
@@ -137,40 +135,56 @@ export async function POST(req: NextRequest) {
         ? `Analyze this e-commerce store for AI representation quality and readiness: ${input}`
         : `Analyze this product description for AI representation quality and readiness:\n\n${input}`;
 
-    const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 2000,
-        system: SYSTEM_PROMPT,
-        messages: [{ role: "user", content: userMessage }],
-      }),
-    });
+    const fullPrompt = `${SYSTEM_PROMPT}\n\n${userMessage}`;
 
-    if (!claudeRes.ok) {
-      const errText = await claudeRes.text();
-      console.error("Claude API error:", errText);
+    // ── Gemini API call ──────────────────────────────────────────────────────
+    const geminiRes = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          contents: [
+            {
+              parts: [{ text: fullPrompt }],
+            },
+          ],
+          generationConfig: {
+            temperature: 0.4,
+            maxOutputTokens: 2000,
+          },
+        }),
+      }
+    );
+
+    if (!geminiRes.ok) {
+      const errText = await geminiRes.text();
+      console.error("Gemini API error:", errText);
       return NextResponse.json(
-        { error: "Claude API request failed. Check your API key and quota." },
-        { status: claudeRes.status }
+        { error: "Gemini API request failed. Check your API key." },
+        { status: geminiRes.status }
       );
     }
 
-    const claudeData = await claudeRes.json();
+    const geminiData = await geminiRes.json();
 
-    // Extract text blocks from response
-    const rawText: string = claudeData.content
-      .filter((b: { type: string }) => b.type === "text")
-      .map((b: { text: string }) => b.text)
-      .join("");
+    // ── Extract text from Gemini response ────────────────────────────────────
+    const rawText: string =
+      geminiData?.candidates?.[0]?.content?.parts?.[0]?.text ?? "";
 
-    // Strip any accidental markdown fences
+    if (!rawText) {
+      return NextResponse.json(
+        { error: "Gemini returned an empty response. Please retry." },
+        { status: 500 }
+      );
+    }
+
+    // Strip accidental markdown fences
     const cleaned = rawText.replace(/```json|```/gi, "").trim();
 
+    // ── Parse JSON ───────────────────────────────────────────────────────────
     let parsed: AnalysisResult;
     try {
       parsed = JSON.parse(cleaned);
