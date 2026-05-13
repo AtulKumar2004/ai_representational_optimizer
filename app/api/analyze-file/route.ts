@@ -1,72 +1,12 @@
-// app/api/analyze/route.ts
 import Groq from "groq-sdk";
 import { NextResponse } from "next/server";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface ScoreBreakdown {
-  product_clarity: number;
-  faq_coverage: number;
-  trust_signals: number;
-  policy_completeness: number;
-  structured_data: number;
-}
-
-export interface Issue {
-  title: string;
-  description: string;
-  severity: "High" | "Med" | "Low";
-}
-
-export interface Recommendation {
-  title: string;
-  detail: string;
-  priority: "High" | "Medium" | "Low";
-  effort: "Low" | "Medium" | "High";
-}
-
-export interface ComparisonGap {
-  dimension: string;
-  ai_perceives: string;
-  merchant_intent: string;
-  gap_explanation: string;
-}
-
-export interface AnalysisResult {
-  overall_score: number;
-  overall_label: "Poor" | "Fair" | "Good" | "Excellent";
-  potential_lift: string;
-  score_breakdown: ScoreBreakdown;
-  top_issues: Issue[];
-  all_issues: Issue[];
-  top_recommendations: Recommendation[];
-  ranked_action_plan: Recommendation[];
-  ai_snapshot: string;
-  ai_perception_full: string;
-  perceived_strengths: string[];
-  perceived_weaknesses: string[];
-  fix_playbook: string[];
-  rewritten_description?: string;
-  input_consistency?: {
-    consistencyLevel: "HIGH" | "MEDIUM" | "LOW";
-    canGenerateUnifiedReport: boolean;
-    warning: string;
-    mismatches: string[];
-  };
-  comparison: {
-    ai_perceives: string;
-    merchant_intent: string;
-    gaps: ComparisonGap[];
-  };
-}
-
-// ─── Groq client ──────────────────────────────────────────────────────────────
+import fs from "fs/promises";
+import os from "os";
+import path from "path";
 
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY!,
 });
-
-// ─── System prompt ────────────────────────────────────────────────────────────
 
 const SYSTEM_PROMPT = `You are an expert AI Readiness Analyst specializing in how AI shopping agents (like those used in ChatGPT Shopping, Perplexity, Google SGE) perceive and represent Shopify/e-commerce stores.
 
@@ -138,37 +78,115 @@ Rules:
 - effort must be exactly "Low", "Medium", or "High"
 - Return ONLY the JSON object, nothing else. No backticks. No markdown.`;
 
-// ─── Route handler ────────────────────────────────────────────────────────────
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_TEXT_CHARS = 12000;
+const SUPPORTED_EXTENSIONS = new Set([
+  "pdf",
+  "docx",
+  "txt",
+  "csv",
+  "xlsx",
+  "json",
+]);
+
+function getExtension(filename: string): string {
+  const ext = path.extname(filename).toLowerCase().replace(".", "");
+  return ext;
+}
+
+function normalizeText(text: string): string {
+  return text.replace(/\s+$/g, "").trim();
+}
+
+async function extractText(filePath: string, buffer: Buffer, ext: string): Promise<string> {
+  if (ext === "txt" || ext === "csv" || ext === "json") {
+    const raw = buffer.toString("utf-8");
+    if (ext === "json") {
+      try {
+        const parsed = JSON.parse(raw);
+        return JSON.stringify(parsed, null, 2);
+      } catch {
+        return raw;
+      }
+    }
+    return raw;
+  }
+
+  if (ext === "pdf") {
+    const pdfParse = (await import("pdf-parse")).default;
+    const data = await pdfParse(buffer);
+    return data.text;
+  }
+
+  if (ext === "docx") {
+    const mammoth = await import("mammoth");
+    const result = await mammoth.extractRawText({ buffer });
+    return result.value;
+  }
+
+  if (ext === "xlsx") {
+    const xlsx = await import("xlsx");
+    const workbook = xlsx.read(buffer, { type: "buffer" });
+    const sheets = workbook.SheetNames.map((name) => {
+      const sheet = workbook.Sheets[name];
+      const csv = xlsx.utils.sheet_to_csv(sheet);
+      return `# ${name}\n${csv}`;
+    });
+    return sheets.join("\n\n");
+  }
+
+  throw new Error("Unsupported file type.");
+}
 
 export async function POST(req: Request) {
   try {
-    const { input, mode, model, apiKey } = await req.json() as {
-      input: string;
-      mode: "url" | "description";
-      model?: string;
-      apiKey?: string;
-    };
+    const form = await req.formData();
+    const file = form.get("file");
+    const model = form.get("model")?.toString();
+    const apiKey = form.get("apiKey")?.toString();
+    const returnText = form.get("returnText")?.toString() === "1";
 
-    if (!input || input.trim().length < 3) {
-      return NextResponse.json(
-        { error: "Please provide a valid store URL or product description." },
-        { status: 400 }
-      );
+    if (!file || !(file instanceof File)) {
+      return NextResponse.json({ error: "Please upload a valid file." }, { status: 400 });
     }
 
-    const userMessage =
-      mode === "url"
-        ? `Analyze this e-commerce store for AI representation quality and readiness: ${input}`
-        : `Analyze this product description for AI representation quality and readiness:\n\n${input}`;
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json({ error: "File exceeds 10 MB limit." }, { status: 413 });
+    }
 
-    // Use caller-supplied key/model if provided, otherwise fall back to env defaults
-    const resolvedGroq = apiKey
-      ? new Groq({ apiKey })
-      : groq;
+    const ext = getExtension(file.name);
+    if (!SUPPORTED_EXTENSIONS.has(ext)) {
+      return NextResponse.json({ error: "Unsupported file type." }, { status: 400 });
+    }
 
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "sisyphus-"));
+    const tempPath = path.join(tempDir, file.name.replace(/[^a-zA-Z0-9._-]/g, "_"));
+
+    let extracted = "";
+    try {
+      await fs.writeFile(tempPath, buffer);
+      extracted = await extractText(tempPath, buffer, ext);
+    } finally {
+      await fs.rm(tempDir, { recursive: true, force: true });
+    }
+
+    const cleaned = normalizeText(extracted);
+    if (!cleaned) {
+      return NextResponse.json({ error: "No readable text found in this file." }, { status: 400 });
+    }
+
+    const clipped = cleaned.length > MAX_TEXT_CHARS ? cleaned.slice(0, MAX_TEXT_CHARS) : cleaned;
+
+    if (returnText) {
+      return NextResponse.json({ text: clipped }, { status: 200 });
+    }
+
+    const userMessage = `Analyze the following file content for AI representation quality. Use the content as the primary source of truth. If the content includes a product description, provide rewritten_description; otherwise omit it.\n\nFile name: ${file.name}\nFile type: ${file.type || ext}\n\nExtracted content:\n${clipped}`;
+
+    const resolvedGroq = apiKey ? new Groq({ apiKey }) : groq;
     const resolvedModel = model ?? "llama-3.3-70b-versatile";
 
-    // ── Groq API call ─────────────────────────────────────────────────────────
     const completion = await resolvedGroq.chat.completions.create({
       model: resolvedModel,
       messages: [
@@ -180,41 +198,25 @@ export async function POST(req: Request) {
     });
 
     const rawText = completion.choices[0]?.message?.content ?? "";
-
     if (!rawText) {
-      return NextResponse.json(
-        { error: "Groq returned an empty response. Please retry." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Groq returned an empty response. Please retry." }, { status: 500 });
     }
 
-    // ── Extract JSON robustly ─────────────────────────────────────────────────
     const jsonMatch = rawText.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.error("No JSON found. Raw output:", rawText);
-      return NextResponse.json(
-        { error: "No JSON found in response. Please retry." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "No JSON found in response. Please retry." }, { status: 500 });
     }
 
-    // ── Parse JSON ────────────────────────────────────────────────────────────
-    let parsed: AnalysisResult;
+    let parsed: unknown;
     try {
       parsed = JSON.parse(jsonMatch[0]);
     } catch {
-      console.error("JSON parse failed. Raw output:", jsonMatch[0]);
-      return NextResponse.json(
-        { error: "Model returned malformed JSON. Please retry." },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Model returned malformed JSON. Please retry." }, { status: 500 });
     }
 
     return NextResponse.json(parsed, { status: 200 });
-
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unexpected server error.";
-    console.error("Route error:", message);
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
