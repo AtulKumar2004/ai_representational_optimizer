@@ -62,6 +62,21 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
   const now = new Date().toLocaleDateString("en-US", { dateStyle: "long" });
   const scoreColor_ = scoreColor(result.overall_score);
   const truncatedInput = input.length > 120 ? input.slice(0, 120) + "…" : input;
+  const confidenceScore = Math.round(
+    (result.score_breakdown.trust_signals +
+      result.score_breakdown.policy_completeness +
+      result.score_breakdown.structured_data) /
+      3
+  );
+  const confidenceLabel = confidenceScore >= 75 ? "High" : confidenceScore >= 55 ? "Medium" : "Low";
+  const confidenceReason =
+    result.score_breakdown.structured_data < 50
+      ? "Limited structured metadata visibility."
+      : result.score_breakdown.policy_completeness < 50
+      ? "Incomplete policy coverage."
+      : result.score_breakdown.faq_coverage < 50
+      ? "Sparse FAQ coverage."
+      : "Inputs provide solid coverage.";
 
   const scoreBreakdownHtml = Object.entries(result.score_breakdown)
     .map(([k, v]) => scoreBarHtml(SCORE_LABELS[k] ?? k, v))
@@ -80,23 +95,30 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
     )
     .join("");
 
-  const allIssuesHtml = result.all_issues
-    .map(
-      (issue) => `
-      <div style="border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
-          <span style="font-size:12px;font-weight:700;color:#1e293b;flex:1;">${issue.title}</span>
-          <span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;${severityBadge(issue.severity)}">${issue.severity}</span>
-        </div>
-        <p style="font-size:11px;color:#64748b;margin:6px 0 0;line-height:1.6;">${issue.description}</p>
-      </div>`
-    )
-    .join("");
 
   const actionPlanHtml = result.ranked_action_plan
     .map(
       (rec, i) => `
       <div style="display:flex;gap:12px;border:1px solid #fed7aa;background:#fffaf5;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
+        <span style="flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#1e293b;color:#fff;font-size:11px;font-weight:700;">${i + 1}</span>
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
+            <span style="font-size:12px;font-weight:700;color:#1e293b;">${rec.title}</span>
+            <div style="display:flex;gap:4px;">
+              <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;${priorityBadge(rec.priority)}">${rec.priority} priority</span>
+              <span style="font-size:10px;font-weight:600;padding:2px 7px;border-radius:99px;${effortBadge(rec.effort)}">${rec.effort} effort</span>
+            </div>
+          </div>
+          <p style="font-size:11px;color:#64748b;margin:5px 0 0;line-height:1.6;">${rec.detail}</p>
+        </div>
+      </div>`
+    )
+    .join("");
+
+  const topRecommendationsHtml = result.top_recommendations
+    .map(
+      (rec, i) => `
+      <div style="display:flex;gap:12px;border:1px solid #e2e8f0;background:#ffffff;border-radius:10px;padding:12px 14px;margin-bottom:8px;">
         <span style="flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:#1e293b;color:#fff;font-size:11px;font-weight:700;">${i + 1}</span>
         <div style="flex:1;">
           <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px;">
@@ -172,7 +194,7 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Readiness Report — Kasparro Sisyphus</title>
+  <title>AI Readiness Report — MerchantLens</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;1,9..40,300&display=swap');
 
@@ -405,6 +427,34 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
       color: #475569;
     }
 
+    .meta-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 20px;
+    }
+
+    .meta-pill {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      padding: 4px 10px;
+      border-radius: 99px;
+      background: #f1f5f9;
+      color: #475569;
+    }
+
+    .meta-note {
+      font-size: 11px;
+      color: #64748b;
+    }
+
     /* ── Footer ── */
     .footer {
       margin-top: 48px;
@@ -442,8 +492,8 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
       <div class="logo-mark">
         <div class="logo-icon">AI</div>
         <div class="logo-text">
-          <div class="logo-kasparro">Kasparro Lab</div>
-          <div class="logo-sisyphus">Sisyphus</div>
+          <div class="logo-kasparro">MerchantLens</div>
+          <div class="logo-sisyphus">AI Readiness</div>
         </div>
       </div>
       <div class="report-meta">
@@ -469,19 +519,25 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
       </div>
     </div>
 
-    <!-- AI Snapshot -->
-    <h2>AI Snapshot</h2>
-    <div class="snapshot-box">
-      <p>${result.ai_snapshot}</p>
-    </div>
-    <div class="snapshot-box" style="background:#f8fafc;border-color:#e2e8f0;border-left-color:#94a3b8;">
-      <p>${result.ai_perception_full}</p>
+    <!-- Confidence + Methodology -->
+    <div class="meta-row">
+      <div>
+        <span class="meta-pill">Confidence: ${confidenceLabel}</span>
+        <span class="meta-note" style="margin-left:8px;">Reason: ${confidenceReason}</span>
+      </div>
+      <div class="meta-note">Methodology: Product clarity · FAQ coverage · Trust signals · Policy completeness · Structured data</div>
     </div>
 
     <!-- Score Breakdown -->
     <h2>Score Breakdown</h2>
     <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:20px 22px;">
       ${scoreBreakdownHtml}
+    </div>
+
+    <!-- AI Snapshot -->
+    <h2>AI Snapshot</h2>
+    <div class="snapshot-box">
+      <p>${result.ai_snapshot}</p>
     </div>
 
     <!-- Strengths & Weaknesses -->
@@ -501,17 +557,14 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
     <h2>Top Issues</h2>
     ${topIssuesHtml}
 
-    <!-- All Issues -->
-    <h2>All Issues (${result.all_issues.length})</h2>
-    ${allIssuesHtml}
+    <!-- Top Recommendations -->
+    <h2>Top Recommendations</h2>
+    ${topRecommendationsHtml}
 
-    <!-- Ranked Action Plan -->
-    <h2>Ranked Action Plan</h2>
+    <!-- Action Plan -->
+    <h2>Action Plan</h2>
     ${actionPlanHtml}
-
-    <!-- Fix Playbook -->
-    <h2>Fix Playbook</h2>
-    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;">
+    <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:16px 20px;margin-top:10px;">
       ${playbookHtml}
     </div>
 
@@ -534,8 +587,8 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
 
     <!-- Footer -->
     <div class="footer">
-      <div class="footer-left">Generated by Kasparro Sisyphus · AI Readiness Optimizer</div>
-      <div class="footer-right">Powered by Groq + Llama 3.3 70B</div>
+      <div class="footer-left">Generated by MerchantLens · AI Readiness Report</div>
+      <div class="footer-right">Powered by Groq</div>
     </div>
 
   </div>

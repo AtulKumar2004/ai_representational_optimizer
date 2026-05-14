@@ -38,11 +38,9 @@ export interface AnalysisResult {
   potential_lift: string;
   score_breakdown: ScoreBreakdown;
   top_issues: Issue[];
-  all_issues: Issue[];
   top_recommendations: Recommendation[];
   ranked_action_plan: Recommendation[];
   ai_snapshot: string;
-  ai_perception_full: string;
   perceived_strengths: string[];
   perceived_weaknesses: string[];
   fix_playbook: string[];
@@ -68,9 +66,12 @@ const groq = new Groq({
 
 // ─── System prompt ────────────────────────────────────────────────────────────
 
-const SYSTEM_PROMPT = `You are an expert AI Readiness Analyst specializing in how AI shopping agents (like those used in ChatGPT Shopping, Perplexity, Google SGE) perceive and represent Shopify/e-commerce stores.
+const SYSTEM_PROMPT = `You are an expert AI readiness analyst for how AI shopping agents perceive and represent e-commerce stores.
 
-Analyze the provided store URL or product description and return ONLY a valid JSON object — no markdown, no backticks, no preamble, no explanation. Just the raw JSON.
+Return ONLY a valid JSON object (no markdown, no backticks, no preamble). Keep outputs concise, structured, and deterministic.
+
+Do not invent policies, features, reviews, certifications, or trust signals not implied by the input.
+If information is missing or uncertain, be conservative and reduce scores accordingly.
 
 The JSON must follow this exact schema:
 {
@@ -89,13 +90,6 @@ The JSON must follow this exact schema:
     { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> },
     { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> }
   ],
-  "all_issues": [
-    { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> },
-    { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> },
-    { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> },
-    { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> },
-    { "title": <string>, "description": <string>, "severity": <"High"|"Med"|"Low"> }
-  ],
   "top_recommendations": [
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> },
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> },
@@ -108,8 +102,7 @@ The JSON must follow this exact schema:
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> },
     { "title": <string>, "detail": <string>, "priority": <"High"|"Medium"|"Low">, "effort": <"Low"|"Medium"|"High"> }
   ],
-  "ai_snapshot": <string: 2-3 sentences>,
-  "ai_perception_full": <string: 4-5 sentences>,
+  "ai_snapshot": <string: 1-2 sentences>,
   "perceived_strengths": [<string>, <string>, <string>],
   "perceived_weaknesses": [<string>, <string>, <string>],
   "fix_playbook": [<string>, <string>, <string>],
@@ -132,6 +125,7 @@ The JSON must follow this exact schema:
 }
 
 Rules:
+- Keep strings short and factual. Avoid long paragraphs.
 - All scores must be integers 0-100
 - severity must be exactly "High", "Med", or "Low"
 - priority must be exactly "High", "Medium", or "Low"
@@ -175,8 +169,8 @@ export async function POST(req: Request) {
         { role: "system", content: SYSTEM_PROMPT },
         { role: "user", content: userMessage },
       ],
-      temperature: 0.4,
-      max_tokens: 8192,
+      temperature: 0.2,
+      max_tokens: 4096,
     });
 
     const rawText = completion.choices[0]?.message?.content ?? "";

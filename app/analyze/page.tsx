@@ -228,9 +228,6 @@ ${Object.entries(result.score_breakdown).map(([k, v]) => `- ${SCORE_LABELS[k]}: 
 ## AI Snapshot
 ${result.ai_snapshot}
 
-## AI Full Perception
-${result.ai_perception_full}
-
 ## Perceived Strengths
 ${result.perceived_strengths.map((s) => `- ${s}`).join("\n")}
 
@@ -239,9 +236,6 @@ ${result.perceived_weaknesses.map((w) => `- ${w}`).join("\n")}
 
 ## Top Issues
 ${result.top_issues.map((i) => `### [${i.severity}] ${i.title}\n${i.description}`).join("\n\n")}
-
-## All Issues
-${result.all_issues.map((i) => `### [${i.severity}] ${i.title}\n${i.description}`).join("\n\n")}
 
 ## Top Recommendations
 ${result.top_recommendations.map((r, i) => `### ${i + 1}. ${r.title} [${r.priority} priority, ${r.effort} effort]\n${r.detail}`).join("\n\n")}
@@ -310,7 +304,7 @@ ${result.comparison.gaps.map((g) => `### ${g.dimension}\n- AI sees: ${g.ai_perce
               <ul className="mt-2 space-y-1 text-xs text-slate-600">
                 <li>• Overall score & label ({result.overall_score}/100 — {result.overall_label})</li>
                 <li>• Full score breakdown across 5 dimensions</li>
-                <li>• {result.all_issues.length} identified issues</li>
+                <li>• {result.top_issues.length} identified issues</li>
                 <li>• {result.ranked_action_plan.length}-step ranked action plan</li>
                 <li>• AI perception analysis + gap report</li>
                 <li>• Fix playbook ({result.fix_playbook.length} steps)</li>
@@ -696,7 +690,7 @@ function FullReportSection({ result, context }: { result: AnalysisResult; contex
       {/* AI Perception */}
       <div className="rounded-3xl border border-orange-100 bg-white p-6">
         <p className="text-sm font-semibold text-slate-700">AI Perception Analysis</p>
-        <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm leading-7 text-slate-700">{result.ai_perception_full}</div>
+        <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm leading-7 text-slate-700">{result.ai_snapshot}</div>
         <div className="mt-4 grid gap-4 lg:grid-cols-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Strengths</p>
@@ -723,9 +717,9 @@ function FullReportSection({ result, context }: { result: AnalysisResult; contex
 
       {/* All Issues */}
       <div className="rounded-3xl border border-orange-100 bg-white p-6">
-        <p className="text-sm font-semibold text-slate-700">All Issues ({result.all_issues.length})</p>
+        <p className="text-sm font-semibold text-slate-700">Top Issues ({result.top_issues.length})</p>
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          {result.all_issues.map((issue, i) => <IssueCard key={i} issue={issue} />)}
+          {result.top_issues.map((issue, i) => <IssueCard key={i} issue={issue} />)}
         </div>
       </div>
 
@@ -1075,9 +1069,9 @@ export default function AnalyzePage() {
       )
     : null;
   const aiSnapshotShort = result
-    ? result.ai_perception_full.length > 200
-      ? `${result.ai_perception_full.slice(0, 200)}…`
-      : result.ai_perception_full
+    ? result.ai_snapshot.length > 200
+      ? `${result.ai_snapshot.slice(0, 200)}…`
+      : result.ai_snapshot
     : "";
 
   // ── Render ──────────────────────────────────────────────────────────────────
@@ -1193,30 +1187,30 @@ export default function AnalyzePage() {
           {sidebarSection === "analyze" && <>
 
           {/* Header */}
-          <header className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-2">
+          <header className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
               <button
                 onClick={() => { setResult(null); setError(null); setInput(""); setTab("overview"); }}
-                className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-700"
+                className="w-full rounded-full bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-700 sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
               >
                 New Analysis
               </button>
               <button
                 onClick={() => setShowHistory(true)}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-orange-50 hover:border-orange-200"
+                className="w-full rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-orange-50 hover:border-orange-200 sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
               >
                 History {history.length > 0 && <span className="ml-1 rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">{history.length}</span>}
               </button>
               <button
                 onClick={() => setShowExport(true)}
-                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-orange-50 hover:border-orange-200"
+                className="w-full rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-orange-50 hover:border-orange-200 sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
               >
                 Export Report
               </button>
               {result && (
                 <button
                   onClick={() => setTab("report")}
-                  className="rounded-full border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
+                  className="w-full rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-semibold text-orange-700 transition hover:bg-orange-100 sm:w-auto sm:px-4 sm:py-2 sm:text-sm"
                 >
                   Full Report
                 </button>
@@ -1352,10 +1346,12 @@ export default function AnalyzePage() {
                 </div>
               )}
 
-              <div className="mt-3 flex items-center justify-between">
-                <p className="text-xs text-slate-400">Powered by Groq + {model.replace("llama-3.3-70b-versatile","Llama 3.3 70B").replace("llama-3.1-8b-instant","Llama 3.1 8B").replace("mixtral-8x7b-32768","Mixtral 8x7B")}</p>
+              <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-xs text-slate-400 sm:pr-4">
+                  Powered by Groq + {model.replace("llama-3.3-70b-versatile","Llama 3.3 70B").replace("llama-3.1-8b-instant","Llama 3.1 8B").replace("mixtral-8x7b-32768","Mixtral 8x7B")}
+                </p>
                 <button
-                  className="rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:bg-slate-700"
+                  className="w-full rounded-full bg-slate-900 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50 transition hover:bg-slate-700 sm:w-auto"
                   onClick={runAnalysis}
                   disabled={loading || (!input.trim() && !inputUrl.trim() && !uploadFile)}
                 >
@@ -1651,14 +1647,14 @@ export default function AnalyzePage() {
               <div className="flex items-center justify-between">
                 <p className="text-sm font-semibold text-slate-700">All Issues</p>
                 {result && (
-                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">{result.all_issues.length} total</span>
+                  <span className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">{result.top_issues.length} total</span>
                 )}
               </div>
               {loading && <div className="mt-4 space-y-3"><Skeleton /><Skeleton /><Skeleton /><Skeleton /></div>}
               {result && !loading && (
                 <>
                   <div className="mt-4 grid gap-3 lg:grid-cols-2">
-                    {result.all_issues.map((issue, i) => <IssueCard key={i} issue={issue} />)}
+                    {result.top_issues.map((issue, i) => <IssueCard key={i} issue={issue} />)}
                   </div>
                   <div className="mt-6">
                     <p className="text-xs font-semibold uppercase tracking-widest text-slate-400">Score breakdown detail</p>
@@ -1710,7 +1706,7 @@ export default function AnalyzePage() {
               {loading && <div className="mt-4 space-y-3"><Skeleton h="h-32" /><Skeleton /><Skeleton /></div>}
               {result && !loading && (
                 <>
-                  <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm leading-7 text-slate-700">{result.ai_perception_full}</div>
+                  <div className="mt-4 rounded-2xl bg-orange-50 p-4 text-sm leading-7 text-slate-700">{result.ai_snapshot}</div>
                   <div className="mt-6 grid gap-4 lg:grid-cols-2">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600">Perceived Strengths</p>
