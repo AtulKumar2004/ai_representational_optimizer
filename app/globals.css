@@ -26,6 +26,11 @@
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --surface: #141414;
+    --surface-border: rgba(255, 255, 255, 0.12);
+    --accent: #fb923c;
+    --accent-strong: #f97316;
+    --muted: #c2b6ab;
   }
 }
 
@@ -73,9 +78,24 @@ body {
   backdrop-filter: blur(14px);
 }
 
+@media (prefers-color-scheme: dark) {
+  .glass-card {
+    background: rgba(18, 18, 18, 0.82);
+    border: 1px solid rgba(251, 146, 60, 0.25);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  }
+}
+
 .badge-chip {
   background: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(249, 115, 22, 0.3);
+}
+
+@media (prefers-color-scheme: dark) {
+  .badge-chip {
+    background: rgba(20, 20, 20, 0.9);
+    border: 1px solid rgba(251, 146, 60, 0.35);
+  }
 }
 
 .cta-glow {
@@ -85,4 +105,59 @@ body {
 .logo-strip {
   background: rgba(255, 255, 255, 0.7);
   border: 1px solid rgba(26, 20, 12, 0.08);
+}
+
+@media (prefers-color-scheme: dark) {
+  .logo-strip {
+    background: rgba(18, 18, 18, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .tool-input,
+  .tool-output {
+    background: #101010;
+    border-color: rgba(251, 146, 60, 0.3);
+    color: #f1f1f1;
+  }
+
+  .tool-input::placeholder {
+    color: rgba(241, 241, 241, 0.55);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .trust-item {
+    color: #f1f1f1;
+  }
+
+  .trust-item.trust-item-ok {
+    background: rgba(16, 70, 52, 0.6);
+    border-color: rgba(16, 185, 129, 0.35);
+  }
+
+  .trust-item.trust-item-missing {
+    background: rgba(64, 20, 22, 0.65);
+    border-color: rgba(248, 113, 113, 0.35);
+  }
+
+  .trust-item-status {
+    color: rgba(241, 241, 241, 0.85);
+  }
+
+  .trust-item p,
+  .trust-item span {
+    color: inherit;
+  }
+
+  .policy-missing-chip {
+    background: rgba(64, 20, 22, 0.7);
+    color: #fecaca;
+  }
+
+  .tool-history-card {
+    background: rgba(16, 16, 16, 0.9);
+    border-color: rgba(251, 146, 60, 0.25);
+  }
 }

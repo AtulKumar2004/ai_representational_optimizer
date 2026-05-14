@@ -1077,10 +1077,8 @@ export default function AnalyzePage() {
             {sidebarOpen ? (
               <>
                 <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-orange-100 text-xs font-bold text-orange-700">AI</div>
                   <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.25em] text-orange-600">Kasparro Lab</p>
-                    <p className="text-sm font-bold text-slate-900">Sisyphus</p>
+                    <p className="text-[15px] font-semibold uppercase tracking-[0.25em] text-orange-600">Merchant Lens</p>
                   </div>
                 </div>
                 <button
@@ -1466,7 +1464,7 @@ export default function AnalyzePage() {
                 className={`rounded-t-xl px-4 py-2 text-sm font-semibold transition ${
                   tab === t.id
                     ? "border border-b-0 border-orange-100 bg-white text-orange-700"
-                    : "text-slate-500 hover:text-slate-900"
+                    : "text-white hover:text-orange-700"
                 }`}
               >
                 {t.label}

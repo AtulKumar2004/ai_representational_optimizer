@@ -198,7 +198,7 @@ function OutputBox({
       <textarea
         value={value}
         readOnly
-        className="h-72 w-full rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 text-sm"
+        className="tool-output h-72 w-full rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 text-sm"
       />
 
       <div className="mt-3 flex flex-wrap gap-3">
@@ -311,7 +311,7 @@ function SchemaGenerator({
           setInput(e.target.value)
         }
         placeholder="Paste product description"
-        className="h-52 w-full rounded-2xl border border-orange-100 p-4"
+        className="tool-input h-52 w-full rounded-2xl border border-orange-100 p-4"
       />
 
       <button
@@ -370,7 +370,7 @@ A: Yes, standard return and refund policies apply.
           setInput(e.target.value)
         }
         placeholder="Paste product description"
-        className="h-44 w-full rounded-2xl border border-orange-100 p-4"
+        className="tool-input h-44 w-full rounded-2xl border border-orange-100 p-4"
       />
 
       <OutputBox value={faqs} />
@@ -406,7 +406,7 @@ function TrustChecker({
           setInput(e.target.value)
         }
         placeholder="Paste website copy or product page"
-        className="h-40 w-full rounded-2xl border border-orange-100 p-4"
+        className="tool-input h-40 w-full rounded-2xl border border-orange-100 p-4"
       />
 
       <div className="mt-6 space-y-3">
@@ -421,10 +421,10 @@ function TrustChecker({
           return (
             <div
               key={c}
-              className={`rounded-2xl border p-4 ${
+              className={`trust-item rounded-2xl border p-4 ${
                 ok
-                  ? "border-emerald-200 bg-emerald-50"
-                  : "border-red-200 bg-red-50"
+                  ? "trust-item-ok border-emerald-200 bg-emerald-50"
+                  : "trust-item-missing border-red-200 bg-red-50"
               }`}
             >
               <div className="flex items-center justify-between">
@@ -432,7 +432,7 @@ function TrustChecker({
                   {c}
                 </p>
 
-                <span className="text-sm font-semibold">
+                <span className="trust-item-status text-sm font-semibold">
                   {ok
                     ? "Present"
                     : "Missing"}
@@ -482,7 +482,7 @@ function PolicyAnalyzer({
           setPolicy(e.target.value)
         }
         placeholder="Paste your policy text"
-        className="h-52 w-full rounded-2xl border border-orange-100 p-4"
+        className="tool-input h-52 w-full rounded-2xl border border-orange-100 p-4"
       />
 
       <div className="mt-6">
@@ -494,7 +494,7 @@ function PolicyAnalyzer({
           {missing.map((m) => (
             <span
               key={m}
-              className="rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700"
+              className="policy-missing-chip rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700"
             >
               {m}
             </span>
@@ -613,7 +613,7 @@ function DescriptionEnhancer({
           setInput(e.target.value)
         }
         placeholder="Paste product description"
-        className="h-52 w-full rounded-2xl border border-orange-100 p-4"
+        className="tool-input h-52 w-full rounded-2xl border border-orange-100 p-4"
       />
 
       <button
@@ -694,7 +694,7 @@ function DescriptionEnhancer({
                   setInput(h.input);
                   setResult(h.result);
                 }}
-                className="w-full rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 text-left transition hover:border-orange-300"
+                className="tool-history-card w-full rounded-2xl border border-orange-100 bg-[#fffaf5] p-4 text-left transition hover:border-orange-300"
               >
                 <p className="text-xs font-semibold">
                   {h.input.slice(0, 120)}
