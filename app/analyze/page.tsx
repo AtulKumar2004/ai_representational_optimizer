@@ -1,3 +1,4 @@
+//app/analyze/page.tsx
 "use client";
 
 import { useEffect, useState, useRef } from "react";
@@ -397,46 +398,32 @@ function ReportsPanel({ history, onSelect, isDark }: { history: HistoryEntry[]; 
   );
 }
 
-function ToolkitPanel({ isDark }: { isDark: boolean }) {
-  const tools: { name: string; desc: string; icon: ReactNode; status: "Free" | "Pro" }[] = [
-    { name: "Schema.org Generator", desc: "Generate structured data markup for your products", icon: <Code2 className="h-5 w-5 text-slate-700" />, status: "Free" },
-    { name: "FAQ Builder", desc: "AI-powered FAQ generator from product descriptions", icon: <CircleHelp className="h-5 w-5 text-slate-700" />, status: "Free" },
-    { name: "Trust Signal Checker", desc: "Audit your store's trust signals and social proof", icon: <ShieldCheck className="h-5 w-5 text-slate-700" />, status: "Free" },
-    { name: "Policy Analyzer", desc: "Check completeness of return, shipping, and privacy policies", icon: <FileCheck2 className="h-5 w-5 text-slate-700" />, status: "Free" },
-    { name: "Description Enhancer", desc: "Rewrite product descriptions for AI agent clarity", icon: <Sparkles className="h-5 w-5 text-slate-700" />, status: "Pro" },
-    { name: "Competitor Benchmark", desc: "Compare your AI readiness to similar stores", icon: <TrendingUp className="h-5 w-5 text-slate-700" />, status: "Pro" },
-  ];
+import ToolkitFeatures from "./toolkit";
 
+function ToolkitPanel({ isDark }: { isDark: boolean }) {
   return (
     <div className="p-6">
-      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">Toolkit</p>
-      <p className={`mt-1 text-lg font-bold ${isDark ? "text-slate-100" : "text-slate-900"}`}>Optimization Tools</p>
-      <p className={`mt-2 text-sm ${isDark ? "text-slate-300" : "text-slate-700"}`}>Tools to improve your AI representation quality.</p>
-      <div className="mt-6 space-y-3">
-        {tools.map((tool) => (
-          <div key={tool.name} className="rounded-2xl border border-orange-100 bg-white p-4">
-            <div className="flex items-start gap-3">
-              <span className="text-xl">{tool.icon}</span>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="text-xs font-semibold text-slate-900">{tool.name}</p>
-                  <span className={`rounded-full px-2 py-0.5 text-[9px] font-bold ${
-                    tool.status === "Pro" ? "bg-orange-100 text-orange-700" : "bg-emerald-100 text-emerald-700"
-                  }`}>{tool.status}</span>
-                </div>
-                <p className="mt-0.5 text-[11px] text-slate-600">{tool.desc}</p>
-              </div>
-            </div>
-            <button className={`mt-3 w-full rounded-full py-1.5 text-xs font-semibold transition ${
-              tool.status === "Pro"
-                ? "border border-orange-200 text-orange-700 hover:bg-orange-50"
-                : "bg-slate-900 text-white hover:bg-slate-700"
-            }`}>
-              {tool.status === "Pro" ? "Upgrade to unlock" : "Open tool"}
-            </button>
-          </div>
-        ))}
-      </div>
+      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
+        Toolkit
+      </p>
+
+      <p
+        className={`mt-1 text-lg font-bold ${
+          isDark ? "text-slate-100" : "text-slate-900"
+        }`}
+      >
+        Optimization Tools
+      </p>
+
+      <p
+        className={`mt-2 text-sm ${
+          isDark ? "text-slate-300" : "text-slate-700"
+        }`}
+      >
+        AI optimization utilities for merchant readiness.
+      </p>
+
+      <ToolkitFeatures isDark={isDark} />
     </div>
   );
 }
