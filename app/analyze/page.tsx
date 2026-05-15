@@ -1464,7 +1464,9 @@ export default function AnalyzePage() {
                 className={`rounded-t-xl px-4 py-2 text-sm font-semibold transition ${
                   tab === t.id
                     ? "border border-b-0 border-orange-100 bg-white text-orange-700"
-                    : "text-white hover:text-orange-700"
+                    : isDark
+                      ? "text-slate-200 hover:text-orange-200"
+                      : "text-slate-500 hover:text-orange-700"
                 }`}
               >
                 {t.label}
