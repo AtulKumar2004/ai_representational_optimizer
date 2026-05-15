@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function Home() {
   return (
-    <div className="hero-shell flex min-h-screen flex-col">
+    <div className="hero-shell flex min-h-screen flex-col pt-6 lg:pt-10">
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div>
@@ -47,6 +47,30 @@ export default function Home() {
               representation breaks down, and the exact fixes that move trust and
               conversion forward.
             </p>
+          </div>
+
+          <div className="glass-card w-full max-w-md rounded-2xl p-4 text-xs text-slate-700 shadow-xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
+              AI Understanding Snapshot
+            </p>
+            <div className="mt-3 space-y-2">
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500">
+                  AI interpretation
+                </p>
+                <p className="text-sm text-slate-700">
+                  Trusted, clear, high intent match.
+                </p>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-500">
+                <span>Confidence</span>
+                <span className="font-semibold text-slate-900">78%</span>
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-500">Missing info</p>
+                <p className="text-sm text-slate-700">Warranty terms, delivery windows.</p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-3">
@@ -143,25 +167,6 @@ export default function Home() {
           </div>
         </section>
 
-        <div className="glass-card absolute bottom-6 left-6 hidden w-96 rounded-2xl p-4 text-xs text-slate-700 shadow-xl lg:block">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
-            AI Understanding Snapshot
-          </p>
-          <div className="mt-3 space-y-2">
-            <div>
-              <p className="text-[11px] font-semibold text-slate-500">AI interpretation</p>
-              <p className="text-sm text-slate-700">Trusted, clear, high intent match.</p>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-              <span>Confidence</span>
-              <span className="font-semibold text-slate-900">78%</span>
-            </div>
-            <div>
-              <p className="text-[11px] font-semibold text-slate-500">Missing info</p>
-              <p className="text-sm text-slate-700">Warranty terms, delivery windows.</p>
-            </div>
-          </div>
-        </div>
       </main>
 
     </div>

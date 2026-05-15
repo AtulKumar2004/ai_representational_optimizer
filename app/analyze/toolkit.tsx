@@ -48,30 +48,35 @@ export default function ToolkitFeatures({
         <ToolCard
           title="Schema.org Generator"
           icon={<Code2 className="h-5 w-5" />}
+          isDark={isDark}
           onClick={() => setActiveTool("schema")}
         />
 
         <ToolCard
           title="FAQ Builder"
           icon={<CircleHelp className="h-5 w-5" />}
+          isDark={isDark}
           onClick={() => setActiveTool("faq")}
         />
 
         <ToolCard
           title="Trust Signal Checker"
           icon={<ShieldCheck className="h-5 w-5" />}
+          isDark={isDark}
           onClick={() => setActiveTool("trust")}
         />
 
         <ToolCard
           title="Policy Analyzer"
           icon={<FileCheck2 className="h-5 w-5" />}
+          isDark={isDark}
           onClick={() => setActiveTool("policy")}
         />
 
         <ToolCard
           title="Description Enhancer"
           icon={<Sparkles className="h-5 w-5" />}
+          isDark={isDark}
           onClick={() => setActiveTool("rewrite")}
         />
       </div>
@@ -112,16 +117,22 @@ export default function ToolkitFeatures({
 function ToolCard({
   title,
   icon,
+  isDark,
   onClick,
 }: {
   title: string;
   icon: React.ReactNode;
+  isDark: boolean;
   onClick: () => void;
 }) {
   return (
     <button
       onClick={onClick}
-      className="glass-card rounded-3xl p-5 text-left transition hover:scale-[1.01]"
+      className={`rounded-3xl border p-5 text-left transition hover:scale-[1.01] ${
+        isDark
+          ? "border-orange-200 bg-[#fff3e6] text-slate-900"
+          : "glass-card text-slate-800"
+      }`}
     >
       <div className="flex items-center gap-3">
         <span>{icon}</span>
