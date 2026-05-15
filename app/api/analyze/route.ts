@@ -134,6 +134,72 @@ Rules:
 
 // ─── Route handler ────────────────────────────────────────────────────────────
 
+async function fetchPageText(
+  url: string
+): Promise<string> {
+  const controller =
+    new AbortController();
+
+  const timeout = setTimeout(
+    () => controller.abort(),
+    12000
+  );
+
+  try {
+    const res = await fetch(
+      url,
+      {
+        signal:
+          controller.signal,
+
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0",
+        },
+
+        redirect: "follow",
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(
+        `HTTP ${res.status}`
+      );
+    }
+
+    const html =
+      await res.text();
+
+    const text = html
+      .replace(
+        /<script[\s\S]*?<\/script>/gi,
+        " "
+      )
+      .replace(
+        /<style[\s\S]*?<\/style>/gi,
+        " "
+      )
+      .replace(
+        /<!--[\s\S]*?-->/g,
+        " "
+      )
+      .replace(
+        /<[^>]+>/g,
+        " "
+      )
+      .replace(
+        /\s{2,}/g,
+        " "
+      )
+      .trim()
+      .slice(0, 15000);
+
+    return text;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function POST(req: Request) {
   try {
     const { input, mode, model, apiKey } = await req.json() as {
@@ -150,11 +216,44 @@ export async function POST(req: Request) {
       );
     }
 
-    const userMessage =
-      mode === "url"
-        ? `Analyze this e-commerce store for AI representation quality and readiness: ${input}`
-        : `Analyze this product description for AI representation quality and readiness:\n\n${input}`;
+    let userMessage = "";
 
+if (mode === "url") {
+  let scrapedText = "";
+
+  try {
+    scrapedText =
+      await fetchPageText(
+        input
+      );
+  } catch (err) {
+    return NextResponse.json(
+      {
+        error:
+          "Failed to scrape website.",
+      },
+      {
+        status: 400,
+      }
+    );
+  }
+
+  userMessage = `
+Analyze this ecommerce store for AI representation quality and readiness.
+
+Store URL:
+${input}
+
+Extracted Website Content:
+${scrapedText}
+`;
+} else {
+  userMessage = `
+Analyze this product description for AI representation quality and readiness:
+
+${input}
+`;
+}
     // Use caller-supplied key/model if provided, otherwise fall back to env defaults
     const resolvedGroq = apiKey
       ? new Groq({ apiKey })

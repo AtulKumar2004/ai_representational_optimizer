@@ -389,70 +389,119 @@ A: Yes, standard return and refund policies apply.
   );
 }
 
-function TrustChecker({
-  onClose,
-}: {
-  onClose: () => void;
-}) {
-  const [input, setInput] =
-    useState("");
-
-  const checks = [
-    "Customer reviews",
-    "Refund policy",
-    "Secure checkout",
-    "Shipping transparency",
-    "Contact information",
-    "Business identity",
-  ];
-
+function TrustChecker({ onClose }: { onClose: () => void }) {
+  const [url, setUrl] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<null | {
+    checks: { label: string; status: "Present" | "Missing" | "Partial"; detail: string }[];
+    summary: string;
+    overallScore: number;
+  }>(null);
+  const [error, setError] = useState<string | null>(null);
+ 
+  async function analyze() {
+    const trimmed = url.trim();
+    if (!trimmed) return;
+    setLoading(true);
+    setError(null);
+    setResults(null);
+ 
+    try {
+      const res = await fetch("/api/trust_check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: trimmed }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || "Analysis failed.");
+      setResults(data);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unexpected error.");
+    } finally {
+      setLoading(false);
+    }
+  }
+ 
   return (
-    <Modal
-      title="Trust Signal Checker"
-      onClose={onClose}
-    >
-      <textarea
-        value={input}
-        onChange={(e) =>
-          setInput(e.target.value)
-        }
-        placeholder="Paste website copy or product page"
-        className="tool-input h-40 w-full rounded-2xl border border-orange-100 p-4"
-      />
-
-      <div className="mt-6 space-y-3">
-        {checks.map((c) => {
-          const ok =
-            input
-              .toLowerCase()
-              .includes(
-                c.toLowerCase()
-              );
-
-          return (
+    <Modal title="Trust Signal Checker" onClose={onClose}>
+      <p className="text-sm text-slate-600 mb-4">
+        Enter your store URL — the AI will fetch and analyze it for trust signals automatically.
+      </p>
+      <div className="flex gap-2">
+        <input
+          type="url"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && analyze()}
+          placeholder="https://yourstore.myshopify.com"
+          className="tool-input flex-1 rounded-2xl border border-orange-100 px-4 py-2.5 text-sm"
+        />
+        <button
+          onClick={analyze}
+          disabled={loading || !url.trim()}
+          className="rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
+        >
+          {loading ? "Analyzing…" : "Analyze"}
+        </button>
+      </div>
+ 
+      {error && (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">{error}</div>
+      )}
+ 
+      {loading && (
+        <div className="mt-6 space-y-3">
+          {[1,2,3,4,5,6].map((i) => (
+            <div key={i} className="h-14 animate-pulse rounded-2xl bg-orange-100" />
+          ))}
+        </div>
+      )}
+ 
+      {results && !loading && (
+        <div className="mt-6 space-y-3">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-sm font-semibold text-slate-700">Trust Signal Analysis</p>
+            <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+              results.overallScore >= 75 ? "bg-emerald-100 text-emerald-700" :
+              results.overallScore >= 50 ? "bg-orange-100 text-orange-700" :
+              "bg-red-100 text-red-700"
+            }`}>
+              Score: {results.overallScore}/100
+            </span>
+          </div>
+ 
+          <div className="rounded-2xl bg-orange-50 px-4 py-3 text-xs text-slate-700 leading-5">
+            {results.summary}
+          </div>
+ 
+          {results.checks.map((c) => (
             <div
-              key={c}
-              className={`trust-item rounded-2xl border p-4 ${
-                ok
+              key={c.label}
+              className={`rounded-2xl border p-4 ${
+                c.status === "Present"
                   ? "trust-item-ok border-emerald-200 bg-emerald-50"
+                  : c.status === "Partial"
+                  ? "border-orange-200 bg-orange-50"
                   : "trust-item-missing border-red-200 bg-red-50"
               }`}
             >
-              <div className="flex items-center justify-between">
-                <p className="font-medium">
-                  {c}
-                </p>
-
-                <span className="trust-item-status text-sm font-semibold">
-                  {ok
-                    ? "Present"
-                    : "Missing"}
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-medium text-sm">{c.label}</p>
+                <span className={`trust-item-status shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                  c.status === "Present" ? "bg-emerald-100 text-emerald-700" :
+                  c.status === "Partial" ? "bg-orange-100 text-orange-700" :
+                  "bg-red-100 text-red-700"
+                }`}>
+                  {c.status}
                 </span>
               </div>
+              {c.detail && (
+                <p className="mt-1 text-[11px] leading-5 opacity-80">{c.detail}</p>
+              )}
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
     </Modal>
   );
 }
@@ -465,57 +514,238 @@ function PolicyAnalyzer({
   const [policy, setPolicy] =
     useState("");
 
-  const missing = useMemo(() => {
-    const required = [
-      "refund",
-      "shipping",
-      "privacy",
-      "tracking",
-      "contact",
-    ];
+  const [loading, setLoading] =
+    useState(false);
 
-    return required.filter(
-      (r) =>
-        !policy
-          .toLowerCase()
-          .includes(r)
-    );
-  }, [policy]);
+  const [results, setResults] =
+    useState<null | {
+      sections: {
+        label: string;
+        status:
+          | "Present"
+          | "Missing"
+          | "Partial";
+        detail: string;
+      }[];
+
+      summary: string;
+
+      missingCount: number;
+
+      presentCount: number;
+
+      score: number;
+    }>(null);
+
+  const [error, setError] =
+    useState<string | null>(null);
+
+  async function analyze() {
+    const trimmed =
+      policy.trim();
+
+    if (!trimmed) return;
+
+    setLoading(true);
+    setError(null);
+    setResults(null);
+
+    try {
+      const res = await fetch(
+        "/api/policy_analyze",
+        {
+          method: "POST",
+
+          headers: {
+            "Content-Type":
+              "application/json",
+          },
+
+          body: JSON.stringify({
+            policy: trimmed,
+          }),
+        }
+      );
+
+      const data =
+        await res.json();
+
+      if (
+        !res.ok ||
+        data.error
+      ) {
+        throw new Error(
+          data.error ||
+            "Analysis failed."
+        );
+      }
+
+      setResults(data);
+    } catch (err: unknown) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "Unexpected error."
+      );
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <Modal
       title="Policy Analyzer"
       onClose={onClose}
     >
+      <p className="mb-4 text-sm text-slate-600">
+        Paste your refund,
+        shipping, privacy,
+        or store policy text —
+        the AI will analyze
+        policy completeness,
+        transparency, and
+        customer trust
+        readiness.
+      </p>
+
       <textarea
         value={policy}
         onChange={(e) =>
-          setPolicy(e.target.value)
+          setPolicy(
+            e.target.value
+          )
         }
-        placeholder="Paste your policy text"
-        className="tool-input h-52 w-full rounded-2xl border border-orange-100 p-4"
+        placeholder="Paste your policy text here..."
+        className="tool-input h-52 w-full rounded-2xl border border-orange-100 p-4 text-sm"
       />
 
-      <div className="mt-6">
-        <p className="font-semibold">
-          Missing sections
-        </p>
+      <button
+        onClick={analyze}
+        disabled={
+          loading ||
+          !policy.trim()
+        }
+        className="mt-4 rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:opacity-50"
+      >
+        {loading
+          ? "Analyzing…"
+          : "Analyze Policy"}
+      </button>
 
-        <div className="mt-3 flex flex-wrap gap-2">
-          {missing.map((m) => (
-            <span
-              key={m}
-              className="policy-missing-chip rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700"
-            >
-              {m}
-            </span>
-          ))}
+      {error && (
+        <div className="mt-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+          {error}
         </div>
-      </div>
+      )}
+
+      {loading && (
+        <div className="mt-6 space-y-3">
+          {[1, 2, 3, 4, 5].map(
+            (i) => (
+              <div
+                key={i}
+                className="h-14 animate-pulse rounded-2xl bg-orange-100"
+              />
+            )
+          )}
+        </div>
+      )}
+
+      {results && !loading && (
+        <div className="mt-6">
+          <div className="mb-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-700">
+              {
+                results.presentCount
+              }{" "}
+              of{" "}
+              {
+                results
+                  .sections
+                  .length
+              }{" "}
+              sections detected
+            </p>
+
+            <span
+              className={`rounded-full px-3 py-1 text-xs font-bold ${
+                results.score >=
+                75
+                  ? "bg-emerald-100 text-emerald-700"
+                  : results.score >=
+                    50
+                  ? "bg-orange-100 text-orange-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              Score:{" "}
+              {
+                results.score
+              }
+              /100
+            </span>
+          </div>
+
+          <div className="mb-4 rounded-2xl bg-orange-50 px-4 py-3 text-xs leading-5 text-slate-700">
+            {
+              results.summary
+            }
+          </div>
+
+          <div className="space-y-3">
+            {results.sections.map(
+              (s) => (
+                <div
+                  key={s.label}
+                  className={`rounded-2xl border p-4 ${
+                    s.status ===
+                    "Present"
+                      ? "border-emerald-200 bg-emerald-50"
+                      : s.status ===
+                        "Partial"
+                      ? "border-orange-200 bg-orange-50"
+                      : "border-red-200 bg-red-50"
+                  }`}
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">
+                      {
+                        s.label
+                      }
+                    </p>
+
+                    <span
+                      className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        s.status ===
+                        "Present"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : s.status ===
+                            "Partial"
+                          ? "bg-orange-100 text-orange-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {s.status}
+                    </span>
+                  </div>
+
+                  {s.detail && (
+                    <p className="mt-1 text-[11px] leading-5 opacity-80">
+                      {
+                        s.detail
+                      }
+                    </p>
+                  )}
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </Modal>
   );
 }
-
+ 
 function DescriptionEnhancer({
   onClose,
 }: {
