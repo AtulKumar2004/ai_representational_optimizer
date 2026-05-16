@@ -28,7 +28,9 @@ interface InputCardProps {
   // State
   loading: boolean;
   error: string | null;
+  onDismissError: () => void;
   fileError: string | null;
+  onDismissFileError: () => void;
   result: AnalysisResult | null;
 
   // Model label shown at the bottom (e.g. "Llama 3.3 70B")
@@ -54,7 +56,9 @@ export function InputCard({
   setShowUrl,
   loading,
   error,
+  onDismissError,
   fileError,
+  onDismissFileError,
   result,
   modelLabel,
   onRunAnalysis,
@@ -196,15 +200,49 @@ export function InputCard({
         )}
       </div>
 
-      {/* ── Error messages ── */}
-      {error && (
-        <div className="mt-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {error}
+      {/* ── File error banner ── */}
+      {fileError && (
+        <div className="mt-2 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          {/* Icon */}
+          <span className="mt-px shrink-0 text-base leading-none text-red-500" aria-hidden="true">
+            ⚠️
+          </span>
+          <p className="flex-1 text-xs leading-5 text-red-700">{fileError}</p>
+          {/* Dismiss */}
+          <button
+            onClick={onDismissFileError}
+            aria-label="Dismiss file error"
+            className="shrink-0 rounded-full p-0.5 text-red-400 transition hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+          >
+            {/* × character */}
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+              <path d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94 4.28 3.22Z" />
+            </svg>
+          </button>
         </div>
       )}
-      {fileError && (
-        <div className="mt-2 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          {fileError}
+
+      {/* ── Analysis error banner ── */}
+      {error && (
+        <div className="mt-2 flex items-start gap-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+          {/* Icon */}
+          <span className="mt-px shrink-0 text-base leading-none text-red-500" aria-hidden="true">
+            ⚠️
+          </span>
+          <div className="flex-1">
+            <p className="text-xs font-semibold text-red-700">Analysis failed</p>
+            <p className="mt-0.5 text-xs leading-5 text-red-600">{error}</p>
+          </div>
+          {/* Dismiss */}
+          <button
+            onClick={onDismissError}
+            aria-label="Dismiss error"
+            className="shrink-0 rounded-full p-0.5 text-red-400 transition hover:bg-red-100 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-300"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor" className="h-3.5 w-3.5">
+              <path d="M4.28 3.22a.75.75 0 0 0-1.06 1.06L6.94 8l-3.72 3.72a.75.75 0 1 0 1.06 1.06L8 9.06l3.72 3.72a.75.75 0 1 0 1.06-1.06L9.06 8l3.72-3.72a.75.75 0 0 0-1.06-1.06L8 6.94 4.28 3.22Z" />
+            </svg>
+          </button>
         </div>
       )}
 
