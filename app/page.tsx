@@ -6,34 +6,17 @@ export default function Home() {
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-4">
         <div className="flex items-center gap-3">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.3em] text-orange-600">
-              RO
+            <p className="text-LG font-semibold uppercase tracking-[0.3em] text-orange-600">
+              MERCHANT LENS
             </p>
           </div>
         </div>
-        <nav className="hidden items-center gap-8 text-sm font-medium text-slate-700 lg:flex">
-          <a className="transition hover:text-orange-600" href="#overview">
-            Home
-          </a>
-          <a className="transition hover:text-orange-600" href="#features">
-            Products
-          </a>
-          <a className="transition hover:text-orange-600" href="#resources">
-            Resources
-          </a>
-          <a className="transition hover:text-orange-600" href="#pricing">
-            Pricing
-          </a>
-        </nav>
         <div className="flex items-center gap-3" />
       </header>
 
       <main className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col gap-12 px-6 pb-10 pt-6 lg:flex-row lg:items-start">
         <section className="flex flex-1 flex-col gap-6">
           <div className="badge-chip inline-flex w-fit items-center gap-3 rounded-full px-4 py-2 text-xs font-semibold uppercase tracking-[0.25em] text-orange-700">
-            <span className="rounded-full bg-orange-100 px-3 py-1 text-[11px] font-semibold text-orange-700">
-              New Track
-            </span>
             AI Representation Optimizer
           </div>
 

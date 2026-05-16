@@ -42,6 +42,64 @@ const SUPPORTED_EXTENSIONS = [
 const IMAGE_EXTENSIONS = ["png", "jpg", "jpeg", "webp"];
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
 
+// ─── Error sanitization ───────────────────────────────────────────────────────
+
+/**
+ * Converts any thrown value into a short, user-friendly message.
+ * Raw API dumps, JSON parse errors, and network failures are all mapped
+ * to plain-English sentences so they never appear verbatim in the UI.
+ */
+function friendlyError(err: unknown): string {
+  const raw = err instanceof Error ? err.message : String(err);
+
+  // Network / connectivity
+  if (/failed to fetch|network request failed|networkerror/i.test(raw))
+    return "Network error — check your connection and try again.";
+
+  // JSON parse failures (e.g. server returned HTML instead of JSON)
+  if (/unexpected token|json\.parse|invalid json|syntaxerror/i.test(raw))
+    return "The server returned an unexpected response. Please try again.";
+
+  // API auth issues
+  if (/401|unauthorized|invalid api key|authentication/i.test(raw))
+    return "API key is invalid or missing. Update it in Settings and retry.";
+
+  // Rate limiting
+  if (/429|rate limit|too many requests/i.test(raw))
+    return "Too many requests — please wait a moment and try again.";
+
+  // Quota / billing
+  if (/quota|billing|insufficient_quota/i.test(raw))
+    return "API quota exceeded. Check your Groq account or use a different key.";
+
+  // Timeout
+  if (/timeout|timed out|aborted/i.test(raw))
+    return "The request timed out. Try again with a shorter input.";
+
+  // Server-side errors
+  if (/500|internal server|service unavailable|503/i.test(raw))
+    return "The analysis service is temporarily unavailable. Please try again shortly.";
+
+  // File-specific messages (pass through — they are already user-friendly)
+  if (/no readable text|unsupported file|file exceeds/i.test(raw))
+    return raw;
+
+  // Model / content errors
+  if (/model|content_policy|content filter/i.test(raw))
+    return "The AI model couldn't process this input. Try rephrasing or removing sensitive content.";
+
+  // Analysis failed generic
+  if (/analysis failed/i.test(raw))
+    return "Analysis failed. Please check your input and try again.";
+
+  // If the message is short and readable (≤ 120 chars, no stack frames), keep it
+  if (raw.length <= 120 && !/^\s*at\s|Error:|TypeError:|ReferenceError:/.test(raw))
+    return raw;
+
+  // Fallback for anything long or technical
+  return "Something went wrong. Please try again, or contact support if the issue persists.";
+}
+
 // ─── AnalyzePage ──────────────────────────────────────────────────────────────
 
 export default function AnalyzePage() {
@@ -121,10 +179,14 @@ export default function AnalyzePage() {
     if (!file) { setUploadFile(null); return; }
     const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
     if (!SUPPORTED_EXTENSIONS.includes(ext)) {
-      setFileError("Unsupported file type."); setUploadFile(null); return;
+      setFileError("Unsupported file type. Please upload a PDF, DOCX, TXT, CSV, XLSX, JSON, or image file.");
+      setUploadFile(null);
+      return;
     }
     if (file.size > MAX_FILE_SIZE) {
-      setFileError("File exceeds 10 MB limit."); setUploadFile(null); return;
+      setFileError("File exceeds the 10 MB limit. Please choose a smaller file.");
+      setUploadFile(null);
+      return;
     }
     setFileError(null);
     setUploadFile(file);
@@ -165,7 +227,7 @@ export default function AnalyzePage() {
     const hasFile        = !!file;
 
     if (!hasDescription && !hasUrl && !hasFile) {
-      setError("Please provide a description, URL, or file to analyze.");
+      setError("Please provide a product description, store URL, or upload a file to analyze.");
       return;
     }
 
@@ -181,7 +243,8 @@ export default function AnalyzePage() {
         const ext = file.name.split(".").pop()?.toLowerCase() ?? "";
         if (IMAGE_EXTENSIONS.includes(ext)) {
           fileText = await extractImageText(file);
-          if (!fileText.trim()) throw new Error("No readable text found in this image.");
+          if (!fileText.trim())
+            throw new Error("No readable text found in this image. Try a clearer scan or paste the content manually.");
         } else {
           const form = new FormData();
           form.append("file", file);
@@ -243,7 +306,8 @@ export default function AnalyzePage() {
       };
       setHistory((prev) => [...prev, entry]);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Unexpected error.");
+      // Sanitize the error before storing — never expose raw technical strings
+      setError(friendlyError(err));
     } finally {
       setLoading(false);
     }
@@ -439,7 +503,9 @@ export default function AnalyzePage() {
                   setShowUrl={setShowUrl}
                   loading={loading}
                   error={error}
+                  onDismissError={() => setError(null)}
                   fileError={fileError}
+                  onDismissFileError={() => setFileError(null)}
                   result={result}
                   modelLabel={modelLabel}
                   onRunAnalysis={runAnalysis}
