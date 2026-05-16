@@ -199,16 +199,37 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Groq returned an empty response. Please retry." }, { status: 500 });
     }
 
-    const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return NextResponse.json({ error: "No JSON found in response. Please retry." }, { status: 500 });
-    }
+    const tryParseJson = (text: string): unknown | null => {
+      const match = text.match(/\{[\s\S]*\}/);
+      if (!match) return null;
+      try { return JSON.parse(match[0]); } catch { return null; }
+    };
 
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(jsonMatch[0]);
-    } catch {
-      return NextResponse.json({ error: "Model returned malformed JSON. Please retry." }, { status: 500 });
+    let parsed = tryParseJson(rawText);
+
+    if (!parsed) {
+      console.warn("First response malformed — retrying with explicit JSON prompt.");
+      const retryCompletion = await resolvedGroq.chat.completions.create({
+        model: resolvedModel,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+          { role: "assistant", content: rawText },
+          { role: "user", content: "Your response was not valid JSON. Return ONLY the raw JSON object — no markdown, no backticks, no explanation. Start with { and end with }." },
+        ],
+        temperature: 0.1,
+        max_tokens: 4096,
+      });
+      const retryText = retryCompletion.choices[0]?.message?.content ?? "";
+      parsed = tryParseJson(retryText);
+
+      if (!parsed) {
+        console.error("Retry also failed:", retryText.slice(0, 300));
+        return NextResponse.json(
+          { error: "Model returned malformed JSON after retry. Please try again." },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json(parsed, { status: 200 });
