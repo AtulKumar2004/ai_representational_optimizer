@@ -21,6 +21,7 @@ interface SidebarProps {
   onToggle: () => void;
   onSelectSection: (section: SidebarSection) => void;
   onGoToResources: () => void;
+  variant?: "desktop" | "mobile";
 }
 
 export function Sidebar({
@@ -31,20 +32,38 @@ export function Sidebar({
   onToggle,
   onSelectSection,
   onGoToResources,
+  variant = "desktop",
 }: SidebarProps) {
+  const isMobile = variant === "mobile";
+
   return (
     <aside
-      className={`hidden flex-col border-r transition-all duration-300 lg:flex ${
-        isOpen ? "w-64" : "w-16"
-      } ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-100 bg-white/80"}`}
+      className={`flex flex-col border-r transition-all duration-300 ${
+        isMobile
+          ? "fixed inset-y-0 left-0 z-50 w-[82vw] max-w-xs shadow-2xl lg:hidden"
+          : "hidden lg:flex"
+      } ${!isMobile && isOpen ? "w-64" : !isMobile ? "w-16" : ""} ${isDark ? "border-slate-700 bg-slate-800" : "border-orange-100 bg-white/80"}`}
     >
       {/* ── Logo / collapse button ── */}
       <div
         className={`flex items-center border-b border-orange-100 px-4 py-5 ${
-          isOpen ? "justify-between gap-3" : "justify-center px-3"
+          isMobile || isOpen ? "justify-between gap-3" : "justify-center px-3"
         }`}
       >
-        {isOpen ? (
+        {isMobile ? (
+          <>
+            <p className="text-[15px] font-semibold uppercase tracking-[0.25em] text-orange-600">
+              Merchant Lens
+            </p>
+            <button
+              onClick={onToggle}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-orange-200 text-sm text-orange-700 hover:bg-orange-50"
+              aria-label="Close sidebar"
+            >
+              ×
+            </button>
+          </>
+        ) : isOpen ? (
           <>
             <p className="text-[15px] font-semibold uppercase tracking-[0.25em] text-orange-600">
               Merchant Lens
@@ -81,17 +100,17 @@ export function Sidebar({
                 : isDark
                 ? "text-slate-200 hover:bg-slate-700 hover:text-white"
                 : "text-slate-800 hover:bg-orange-50 hover:text-slate-900"
-            } ${isOpen ? "" : "justify-center px-2"}`}
-            title={!isOpen ? item.label : undefined}
+            } ${isMobile || isOpen ? "" : "justify-center px-2"}`}
+            title={!isMobile && !isOpen ? item.label : undefined}
           >
             <span className="text-base">{item.icon}</span>
-            {isOpen && item.label}
+            {(isMobile || isOpen) && item.label}
           </button>
         ))}
       </nav>
 
       {/* ── Help footer (only visible when sidebar is expanded + on Analyze tab) ── */}
-      {isOpen && activeSection === "analyze" && (
+      {(isMobile || isOpen) && activeSection === "analyze" && (
         <div className="border-t border-orange-100 p-4">
           <div className="rounded-2xl border border-orange-100 bg-white px-4 py-4 text-xs text-slate-600">
             <p className="font-semibold text-slate-900">Need help?</p>

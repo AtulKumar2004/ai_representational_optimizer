@@ -16,7 +16,7 @@
 
 import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
-import { BarChart3, BookOpen, Search, Settings, Wrench } from "lucide-react";
+import { BarChart3, BookOpen, Menu, Search, Settings, Wrench } from "lucide-react";
 
 import type { AnalysisResult } from "../api/analyze/route";
 import type { HistoryEntry, Tab, InputMode, SidebarSection } from "./types";
@@ -127,6 +127,7 @@ export default function AnalyzePage() {
   const [history,     setHistory]     = useState<HistoryEntry[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [showExport,  setShowExport]  = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   // ── Persisted settings ──────────────────────────────────────────────────────
   const [apiKey, setApiKeyState] = useState(() =>
@@ -137,9 +138,7 @@ export default function AnalyzePage() {
       ? localStorage.getItem("sisyphus_model") ?? "llama-3.3-70b-versatile"
       : "llama-3.3-70b-versatile"
   );
-  const [themeState, setThemeState] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("sisyphus_theme") ?? "light" : "light"
-  );
+  const [themeState, setThemeState] = useState("light");
   const [systemDark, setSystemDark] = useState(false);
 
   // ── Theme helpers ────────────────────────────────────────────────────────────
@@ -162,6 +161,26 @@ export default function AnalyzePage() {
   const setModel  = (v: string) => { setModelState(v); localStorage.setItem("sisyphus_model", v); };
 
   // Track OS dark-mode changes when theme is "system"
+  useEffect(() => {
+    const storedTheme = localStorage.getItem("sisyphus_theme") ?? "light";
+    setThemeState(storedTheme);
+
+    const root = document.documentElement;
+    if (storedTheme === "dark") {
+      root.classList.add("dark");
+    } else if (storedTheme === "light") {
+      root.classList.remove("dark");
+    } else {
+      const media = window.matchMedia("(prefers-color-scheme: dark)");
+      const update = () => setSystemDark(media.matches);
+      update();
+      media.addEventListener("change", update);
+      if (media.matches) root.classList.add("dark");
+      else root.classList.remove("dark");
+      return () => media.removeEventListener("change", update);
+    }
+  }, []);
+
   useEffect(() => {
     if (themeState !== "system") return;
     const media = window.matchMedia("(prefers-color-scheme: dark)");
@@ -326,6 +345,7 @@ export default function AnalyzePage() {
     }
     setTab("overview");
     setSidebarSection("analyze");
+    setMobileSidebarOpen(false);
   }
 
   function clearHistory() {
@@ -428,6 +448,34 @@ export default function AnalyzePage() {
         />
       )}
 
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          aria-label="Close sidebar overlay"
+          onClick={() => setMobileSidebarOpen(false)}
+          className="fixed inset-0 z-40 bg-black/40 lg:hidden"
+        />
+      )}
+
+      {mobileSidebarOpen && (
+        <Sidebar
+          variant="mobile"
+          isOpen={true}
+          isDark={isDark}
+          activeSection={sidebarSection}
+          navItems={navItems}
+          onToggle={() => setMobileSidebarOpen(false)}
+          onSelectSection={(section) => {
+            setSidebarSection(section);
+            setMobileSidebarOpen(false);
+          }}
+          onGoToResources={() => {
+            setSidebarSection("resources");
+            setMobileSidebarOpen(false);
+          }}
+        />
+      )}
+
       <div className="flex min-h-screen">
 
         {/* ── Collapsible sidebar ── */}
@@ -442,7 +490,20 @@ export default function AnalyzePage() {
         />
 
         {/* ── Main content area ── */}
-        <main className="flex-1 overflow-auto px-6 py-4 lg:px-10">
+        <main className="flex-1 overflow-auto px-4 py-4 sm:px-6 lg:px-10">
+          <div className="mb-4 flex items-center justify-between lg:hidden">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-orange-700 shadow-sm"
+            >
+              <Menu className="h-4 w-4" />
+              Menu
+            </button>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
+              Merchant Lens
+            </p>
+          </div>
 
           {/* Non-analyze sidebar panels */}
           {sidebarSection === "reports" && (
