@@ -236,7 +236,7 @@ export function SettingsPanel({
   const [clearConfirm, setClearConfirm] = useState(false);
 
   function handleSave() {
-    localStorage.setItem("sisyphus_api_key", apiKey);
+    localStorage.setItem("merchantlens_api_key", apiKey);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }

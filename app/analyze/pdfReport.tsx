@@ -256,7 +256,7 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
       color: #f97316;
     }
 
-    .logo-sisyphus {
+    .logo-merchantlens {
       font-family: 'DM Serif Display', serif;
       font-size: 18px;
       color: #1e293b;
@@ -493,7 +493,7 @@ export function buildPdfHtml(result: AnalysisResult, input: string): string {
         <div class="logo-icon">AI</div>
         <div class="logo-text">
           <div class="logo-kasparro">MerchantLens</div>
-          <div class="logo-sisyphus">AI Readiness</div>
+          <div class="logo-merchantlens">AI Readiness</div>
         </div>
       </div>
       <div class="report-meta">

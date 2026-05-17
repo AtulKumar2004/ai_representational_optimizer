@@ -131,11 +131,11 @@ export default function AnalyzePage() {
 
   // ── Persisted settings ──────────────────────────────────────────────────────
   const [apiKey, setApiKeyState] = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("sisyphus_api_key") ?? "" : ""
+    typeof window !== "undefined" ? localStorage.getItem("merchantlens_api_key") ?? "" : ""
   );
   const [model, setModelState] = useState(() =>
     typeof window !== "undefined"
-      ? localStorage.getItem("sisyphus_model") ?? "llama-3.3-70b-versatile"
+      ? localStorage.getItem("merchantlens_model") ?? "llama-3.3-70b-versatile"
       : "llama-3.3-70b-versatile"
   );
   const [themeState, setThemeState] = useState("light");
@@ -146,7 +146,7 @@ export default function AnalyzePage() {
   /** Applies the chosen theme to the <html> element and persists the choice. */
   const setTheme = (t: string) => {
     setThemeState(t);
-    localStorage.setItem("sisyphus_theme", t);
+    localStorage.setItem("merchantlens_theme", t);
     const root = document.documentElement;
     if (t === "dark") root.classList.add("dark");
     else if (t === "light") root.classList.remove("dark");
@@ -158,11 +158,11 @@ export default function AnalyzePage() {
   };
 
   const setApiKey = (v: string) => setApiKeyState(v);
-  const setModel  = (v: string) => { setModelState(v); localStorage.setItem("sisyphus_model", v); };
+  const setModel  = (v: string) => { setModelState(v); localStorage.setItem("merchantlens_model", v); };
 
   // Track OS dark-mode changes when theme is "system"
   useEffect(() => {
-    const storedTheme = localStorage.getItem("sisyphus_theme") ?? "light";
+    const storedTheme = localStorage.getItem("merchantlens_theme") ?? "light";
     setThemeState(storedTheme);
 
     const root = document.documentElement;
