@@ -157,7 +157,7 @@ export async function POST(req: Request) {
     }
 
     const buffer = Buffer.from(await file.arrayBuffer());
-    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "sisyphus-"));
+    const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "merchantlens-"));
     const tempPath = path.join(tempDir, file.name.replace(/[^a-zA-Z0-9._-]/g, "_"));
 
     let extracted = "";
