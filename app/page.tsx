@@ -34,7 +34,7 @@ export default function Home() {
 
           <div className="glass-card w-full max-w-md rounded-2xl p-4 text-xs text-slate-700 shadow-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-orange-600">
-              AI Understanding Snapshot
+              Sample AI Understanding Snapshot
             </p>
             <div className="mt-3 space-y-2">
               <div>
@@ -110,11 +110,12 @@ export default function Home() {
           <div className="glass-card w-full max-w-md rounded-[32px] p-6">
             <div className="flex items-center justify-between">
               <div>
+                <p className="text-md font-semibold text-orange-700">Sample AI readiness snapshot:</p>
                 <p className="text-sm font-semibold text-slate-600">Agent readiness</p>
                 <p className="text-3xl font-semibold text-slate-900">82%</p>
               </div>
               <div className="rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-orange-700">
-                +14% this week
+                Potential rise
               </div>
             </div>
             <div className="mt-6 space-y-4">
@@ -142,8 +143,8 @@ export default function Home() {
           </div>
 
           <div className="glass-card absolute -bottom-6 right-0 hidden w-44 rounded-2xl p-4 text-xs text-slate-700 shadow-xl lg:block">
-            <p className="font-semibold text-slate-900">Conversion lift</p>
-            <p className="mt-2">Projected +9.6%</p>
+            <p className="font-semibold text-slate-900">AI recommendation confidence</p>
+            <p className="mt-2">Stronger AI representation</p>
             <div className="mt-3 h-1 w-full rounded-full bg-orange-100">
               <div className="h-1 w-2/3 rounded-full bg-orange-500" />
             </div>
