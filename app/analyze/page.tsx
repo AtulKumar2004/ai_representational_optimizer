@@ -166,6 +166,7 @@ export default function AnalyzePage() {
     setThemeState(storedTheme);
 
     const root = document.documentElement;
+    let removeListener: (() => void) | undefined;
     if (storedTheme === "dark") {
       root.classList.add("dark");
     } else if (storedTheme === "light") {
@@ -177,8 +178,12 @@ export default function AnalyzePage() {
       media.addEventListener("change", update);
       if (media.matches) root.classList.add("dark");
       else root.classList.remove("dark");
-      return () => media.removeEventListener("change", update);
+      removeListener = () => media.removeEventListener("change", update);
     }
+    return () => {
+      removeListener?.();
+      root.classList.remove("dark");
+    };
   }, []);
 
   useEffect(() => {
