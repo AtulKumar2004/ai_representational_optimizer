@@ -57,9 +57,7 @@ export default function Home() {
           </div>
 
           <div className="flex flex-wrap gap-3">
-            <button className="cta-glow rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600">
-              Watch demo
-            </button>
+            <a className="cta-glow rounded-full bg-orange-500 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-600" href="https://www.youtube.com/watch?v=5og_wF8LpPU" target="_blank" rel="noopener noreferrer">Watch demo</a>
             <Link
               className="rounded-full border border-orange-200 bg-white px-5 py-2.5 text-sm font-semibold text-orange-700 transition hover:border-orange-300"
               href="/analyze"

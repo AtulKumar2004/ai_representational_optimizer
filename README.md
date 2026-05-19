@@ -29,6 +29,7 @@ https://www.youtube.com/watch?v=5og_wF8LpPU
 
 ---
 
+<a id="problem-statement"></a>
 ## 🧩 Problem Statement
 
 AI-powered shopping assistants are now a primary discovery channel for online stores. When a customer asks ChatGPT or Perplexity "find me the best eco-friendly water bottle under $40," these agents scan, interpret, and rank stores based on the quality of their product data, trust signals, structured markup, and policy clarity.
@@ -43,6 +44,7 @@ Most merchants have no idea what AI agents think of their store, or why they're 
 
 ---
 
+<a id="how-it-works"></a>
 ## ⚙️ How It Works
 
 1. **Input** — The merchant provides one or more of: a product description (text), a store URL, or an uploaded file (PDF, DOCX, image, etc.)
@@ -52,6 +54,7 @@ Most merchants have no idea what AI agents think of their store, or why they're 
 
 ---
 
+<a id="features"></a>
 ## ✨ Features
 
 ### Core Analysis
@@ -91,6 +94,7 @@ Most merchants have no idea what AI agents think of their store, or why they're 
 
 ---
 
+<a id="tech-stack"></a>
 ## 🛠 Tech Stack
 
 | Layer | Technology |
@@ -105,6 +109,7 @@ Most merchants have no idea what AI agents think of their store, or why they're 
 
 ---
 
+<a id="project-structure"></a>
 ## 📁 Project Structure
 
 ```
@@ -180,6 +185,7 @@ ai_representational_optimizer/
 
 ---
 
+<a id="prerequisites"></a>
 ## ✅ Prerequisites
 
 Before you start, make sure you have:
@@ -190,6 +196,7 @@ Before you start, make sure you have:
 
 ---
 
+<a id="setup--local-development"></a>
 ## 🚀 Setup & Local Development
 
 ### 1. Clone the repository
@@ -246,6 +253,7 @@ npm run start
 
 ---
 
+<a id="environment-variables"></a>
 ## 🔑 Environment Variables
 
 Create a `.env.local` file in the project root with the following:
@@ -268,6 +276,7 @@ GROQ_MODEL=llama-3.3-70b-versatile
 
 ---
 
+<a id="api-routes"></a>
 ## 🔌 API Routes
 
 All routes accept and return JSON unless noted.
@@ -316,6 +325,7 @@ All routes accept and return JSON unless noted.
 
 ---
 
+<a id="available-models"></a>
 ## 🤖 Available Models
 
 The model can be selected in Settings (persisted to localStorage) or set via `GROQ_MODEL` in your `.env.local`.
@@ -328,6 +338,7 @@ The model can be selected in Settings (persisted to localStorage) or set via `GR
 
 ---
 
+<a id="supported-file-types"></a>
 ## 📎 Supported File Types
 
 Files can be uploaded alongside (or instead of) a text description or URL.
@@ -343,6 +354,7 @@ Maximum file size: **10 MB**
 
 ---
 
+<a id="contributing"></a>
 ## 🤝 Contributing
 
 1. Fork the repository
